@@ -1,0 +1,46 @@
+<html>
+  <head>
+    <title>Step 1 - Input Data</title>
+  </head>
+  <body>
+    <h1>Input Data</h1>
+
+    <p>
+      Profiling data and domain knowledge are specified in this step.
+    </p>
+
+    <ul>
+      <li>
+        <b>Gene list</b> - A text file containing a list of nodes
+        (genes, proteins) involved in the study. One node per line. No
+        row/column names.
+      </li>
+      <li>
+        <b>Data file 1</b> - Profiling data (gene expression, protein
+        expression, RNA-seq RPKM, etc.) of condition 1 in a text file
+	with no row/column names. One node per row, corresponding 
+	to the same order in gene list file. Tab or comma delimited. 
+	Data should be properly normalized.
+      </li>
+      <li>
+        <b>Data file 2</b> - Profiling data (gene expression, protein
+        expression, RNA-seq RPKM, etc.) of condition 2 in a text file
+	with no row/column names. Not required or ignored when
+	experiment condition is set to single condition.
+      </li>
+      <li>
+        <b>Prior knowledge network</b> - Prior knowledge of network
+        topology in a text file with no row/column names. An edge per
+        row, with two node names separated by tab or comma. Or a KGML
+        file downloaded from KEGG website. It is optional. If
+        provided, KDDN will use the knowledge in learning, otherwise
+        it relies solely on data.
+      </li>
+    </ul>
+
+    <p>
+      File choices can be canceled using button.
+    </p>
+
+</body>
+</html>

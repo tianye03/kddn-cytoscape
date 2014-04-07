@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <title>Step 2 - Model Parameters</title>
+  </head>
+  <body>
+    <h1>Model Parameters</h1>
+
+    <p>
+      Model parameters specifies all parameters in KDDN. Parameters
+      can be set in auto mode or manual mode. Parameters are enabled
+      or disabled according to specific settings.
+    </p>
+
+    <ul>
+      <li>
+        <b>&lambda;<sub>1</sub></b> - It controls the overall density
+        of the learned network. Larger &lambda;<sub>1</sub> leads to
+        sparser networks. The default is in auto mode where it is
+        calculated automatically from data. When manual mode is
+        chosen, a spinner shows up to allow user to set a value.
+      </li>
+      <li>
+        <b>&lambda;<sub>2</sub></b> - It controls the density of
+        identified differential edges. It is enabled only in two
+        conditions experiments. Larger &lambda;<sub>2</sub> leads to
+        fewer differential edges. The default is in auto mode where it
+        is found automatically according to the value of &alpha;. When
+	manual mode is chosen, a spinner shows up to allow user to set
+	a value, and &alpha; setting is disabled.
+      </li>
+      <li>
+        <b>&alpha;</b> - The desired significance level of differential edges. It is used to find the corresponding value of &lambda;<sub>2</sub> automatically. It is enabled only in two conditions experiments and &lambda;<sub>2</sub> is set to auto. Check the default checkbox resets it to 0.05.
+      </li>
+      <li>
+        <b>&theta;</b> - The degree of prior knowledge incorporation. It is enabled only when the optional prior knowledge network file is provided. The default is in auto mode where it is found automatically according to the value of &delta;. When manual mode is chosen, a spinner shows up to allow user to set a value, and &delta; setting is disabled.
+      </li>
+      <li>
+        <b>&delta;</b> - The maximum tolerable deviation in the worst case scenario of prior knowledge incorporation. It is used to find the corresponding value of &theta; automatically. It is enabled only when the optional prior knowledge network file is provided and &theta; is set to auto. Check the default checkbox resets it to 0.1.
+      </li>
+    </ul>
+
+</body>
+</html>
