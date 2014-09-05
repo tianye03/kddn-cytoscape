@@ -132,7 +132,14 @@ public class FileInput {
 	            String[] row;
 	            while ((l = inputStream.readLine()) != null) {
 	            	row = l.split("[,\t]+");
-	            	edges.add(row);
+	            	if(row.length > 2)
+	            		edges.add(row);
+	            	else {
+	            		String[] newrow = new String[3];
+	            		System.arraycopy(row, 0, newrow, 0, row.length);
+	            		newrow[2] = "0";
+	            		edges.add(newrow);
+	            	}
 	            }
 	        } finally {
 	            if (inputStream != null) {
@@ -271,7 +278,7 @@ public class FileInput {
 				
 				for(int m=0; m<names1.size(); m++)
 					for(int n=0; n<names2.size(); n++) {
-						String[] anEdge = {names1.get(m), names2.get(n)};
+						String[] anEdge = {names1.get(m), names2.get(n), "0"};
 						edges.add(anEdge);
 					}
 			}
@@ -365,7 +372,10 @@ public class FileInput {
 			String[] row;
             while ((l = inputStream.readLine()) != null) {
             	row = l.split("[,\t]+");
-            	edges.add(row);
+            	String[] newrow = new String[3];
+        		System.arraycopy(row, 0, newrow, 0, row.length);
+        		newrow[2] = "0";
+        		edges.add(newrow);
             }
         } finally {
             if (inputStream != null) {

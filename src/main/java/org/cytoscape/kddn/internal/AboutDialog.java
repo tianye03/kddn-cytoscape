@@ -76,7 +76,7 @@ public class AboutDialog extends JDialog {
 
 		String text = "<html><p align='center'>"
 			+ "<b>K</b>nowledge-fused <b>D</b>ifferential <b>D</b>ependency <b>N</b>etwork</b><br>"
-			+ "<small>Version 1.0.0</small><br /><br />"
+			+ "<small>Version 1.1.0</small><br /><br />"
 			+ "<b>Main developers</b><br />"
 			+ "Ye Tian (Virginia Tech)<br>"
 			+ "Bai Zhang (Johns Hopkins University)"

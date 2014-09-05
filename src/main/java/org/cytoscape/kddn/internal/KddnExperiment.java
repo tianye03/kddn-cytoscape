@@ -22,8 +22,10 @@ package org.cytoscape.kddn.internal;
 
 import java.awt.Color;
 import java.awt.Paint;
+import java.util.HashMap;
 import java.util.Set;
 
+import org.apache.commons.math3.stat.inference.TTest;
 import org.cytoscape.model.CyNetworkFactory;
 import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.session.CyNetworkNaming;
@@ -185,10 +187,33 @@ public class KddnExperiment extends AbstractTask {
 		data1 = KddnMethods.selectData(data1, varIndex);
 		data2 = KddnMethods.selectData(data2, varIndex);
 		
+		HashMap<String, Double> nodeTtestPvalue = new HashMap<String, Double>();
+		HashMap<String, Double> nodeFoldChange = new HashMap<String, Double>();
+		// calculate fold change, t-test p-value
+		if(twoCondition) {
+			TTest aTest = new TTest();
+			for(int i=0; i<varList.length; i++) {
+				double pval = 0;
+				// unequal variance
+				pval = aTest.tTest(KddnMethods.getColumn(data1,i), KddnMethods.getColumn(data2,i));
+				nodeTtestPvalue.put(varList[i], pval);
+			}
+			
+			for(int i=0; i<varList.length; i++) {
+				double fc = 0;
+				
+				double upper = Math.abs(KddnMethods.getVecorMean(KddnMethods.getColumn(data2,i)));
+				double lower = Math.abs(KddnMethods.getVecorMean(KddnMethods.getColumn(data1,i)));
+				fc = upper / lower;
+				
+				nodeFoldChange.put(varList[i], fc);
+			}
+		}
+		
 		// initialize prior network W
-		int[][] W = new int[varList.length][varList.length];
+		int[][] W = new int[varList.length][2*varList.length];
 		for(int i=0; i<varList.length; i++)
-			for(int j=0; j<varList.length; j++) {
+			for(int j=0; j<2*varList.length; j++) {
 				W[i][j] = 0;
 			}
 		
@@ -198,8 +223,9 @@ public class KddnExperiment extends AbstractTask {
 			KddnMethods.mapKnowledgeNetwork(varList, priorKnowledge, W);
 			for(int i=0; i<varList.length-1; i++)
 				for(int j=i+1; j<varList.length; j++) {
-					M += W[i][j];
+					M += W[i][j] + W[i][j+varList.length];
 				}
+			M /= 2;
 		}
 		
 		monitor.setTitle("Determining parameters");
@@ -243,7 +269,6 @@ public class KddnExperiment extends AbstractTask {
 		KddnMethods.standardizeData(data2);
 		// set up KDDN data environment with standardized data
 		KddnSettings stdKddn = new KddnSettings(lambda1, lambda2, pValueCutoff, theta, W, data1, data2, varList, alpha, delta);
-		
 		// solve KDDN with standardized data
 		KddnResults kddn = KddnMethods.solveDDN(stdKddn);
 
@@ -260,7 +285,12 @@ public class KddnExperiment extends AbstractTask {
         	kddnDraw = kddnWp;
         } else
         	kddnDraw = kddn;
-		
+
+        if(twoCondition) {
+        	kddnDraw.ttestP = nodeTtestPvalue;
+        	kddnDraw.foldChange = nodeFoldChange;
+        }
+        
 		monitor.setProgress(1);
 		monitor.setTitle("Creating network");
 		

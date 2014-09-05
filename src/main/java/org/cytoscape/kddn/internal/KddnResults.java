@@ -20,6 +20,8 @@
 
 package org.cytoscape.kddn.internal;
 
+import java.util.HashMap;
+
 /**
  * KDDN results as adjacency matrix, beta matrix, pvalue
  * @author Ye Tian
@@ -31,6 +33,8 @@ public class KddnResults {
 	public int[][] adjacentMatrix = null; // p by 2p
 	public double[][] beta = null;
 	public double[][] pValue = null;
+	public HashMap<String, Double> ttestP = new HashMap<String, Double>();
+	public HashMap<String, Double> foldChange = new HashMap<String, Double>();
     
     public KddnResults(String[] varList, double[][] beta, int[][] adjacentMatrix) {
 

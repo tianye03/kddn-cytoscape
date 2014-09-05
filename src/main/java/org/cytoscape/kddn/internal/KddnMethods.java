@@ -204,9 +204,23 @@ public class KddnMethods {
 						double[][] X1 = removeColumn(kddn.data1, i);
 						double[][] X2 = removeColumn(kddn.data2, i);
 						
-						double[] l1 = new double[kddn.p];
-						for(int j=0; j<kddn.p; j++)
-							l1[j] = (1 - kddn.theta*kddn.W[i][j]) * kddn.lambda1;
+						double[] l1 = new double[2*(kddn.p-1)];
+						double[] l1a = new double[2*kddn.p];
+						for(int j=0; j<2*kddn.p; j++)
+							l1a[j] = (1 - kddn.theta*kddn.W[i][j]) * kddn.lambda1;
+						
+						if(i==0) {
+							System.arraycopy(l1a, 1, l1, 0, kddn.p-1);
+							System.arraycopy(l1a, kddn.p+1, l1, kddn.p-1, kddn.p-1);
+						} else if(i==kddn.p-1){
+							System.arraycopy(l1a, 0, l1, 0, kddn.p-1);
+							System.arraycopy(l1a, kddn.p, l1, kddn.p-1, kddn.p-1);
+						} else {
+							System.arraycopy(l1a, 0, l1, 0, i);
+							System.arraycopy(l1a, kddn.p, l1, kddn.p-1, i);
+							System.arraycopy(l1a, i+1, l1, i, kddn.p-i-1);
+							System.arraycopy(l1a, kddn.p+i+1, l1, kddn.p+i-1, kddn.p-i-1);
+						}
 						
 						BCD oneNode = new BCD(y1, y2, X1, X2, l1, kddn.lambda2);
 
@@ -309,7 +323,7 @@ public class KddnMethods {
      * @param i the column to get
      * @return vector
      */
-    private static double[] getColumn(double[][] data, int i) {
+    static double[] getColumn(double[][] data, int i) {
 		
     	double[] v = new double[data.length];
     	for(int m=0; m<v.length; m++)
@@ -544,13 +558,13 @@ public class KddnMethods {
     	
 		double m = (double) (n1 + n2) / 2;
 		double l1 = 2 / m * qnorm(1 - 0.05 / 2 / p / (m*m), false);
-				
+		
 		standardizeData(ld1);
     	standardizeData(ld2);
 		KddnSettings aRun = new KddnSettings(l1, 0, 0.05, ld1, ld2, varList, 0);
     	KddnResults aResult = solveDDN(aRun);
     	int size = getNetworkSize(aResult);
-    	
+
     	while(size == 0) {
     		l1 = l1 / 4;
     		aRun = new KddnSettings(l1, 0, 0.05, ld1, ld2, varList, 0);
@@ -735,11 +749,11 @@ public class KddnMethods {
     	
     	KddnSettings dataSetting = new KddnSettings(l1, l2, 0.05, d1, d2, varList, 0.05);
     	KddnResults dataResult = solveDDN(dataSetting);
-    	
+
     	double high = 0.5;
     	double low = 0.02;
     	double mid = (high-low) / 2 + low;
-    	  	
+
     	double deviation = thetaError(d1, d2, l1, l2, varList, M, mid, dataResult);
     	
     	while(high - low > 0.01) {
@@ -809,9 +823,9 @@ public class KddnMethods {
 		int[] idx = new int[M];
 		System.arraycopy(permutation(p*(p-1)/2), 0, idx, 0, M);
 		
-		int[][] W = new int[p][p];
+		int[][] W = new int[p][2*p];
 		for(int i=0; i<p; i++)
-    		for(int j=0; j<p; j++) {
+    		for(int j=0; j<2*p; j++) {
     			W[i][j] = 0;
     		}
 		
@@ -827,6 +841,8 @@ public class KddnMethods {
 	                col = ln + j + row;
 	                W[row][col] = 1;
 	                W[col][row] = 1;
+	                W[row][col+p] = 1;
+	                W[col][row+p] = 1;
 	                break;
 	            }
 	        }
@@ -856,12 +872,31 @@ public class KddnMethods {
 				if(index.containsKey(net[i][0].toLowerCase()) && index.containsKey(net[i][1].toLowerCase())) {
 					row = index.get(net[i][0].toLowerCase());
 					col = index.get(net[i][1].toLowerCase());
-					W[row][col] = 1;
-					W[col][row] = 1;
+					if(net[i][2] == "0") {  // both conditions
+						W[row][col] = 1;
+						W[col][row] = 1;
+						W[row][col+varList.length] = 1;
+						W[col][row+varList.length] = 1;
+					} else if(net[i][2] == "1") {  // condition 1
+						W[row][col] = 1;
+						W[col][row] = 1;
+					} else {  // condition 2
+						W[row][col+varList.length] = 1;
+						W[col][row+varList.length] = 1;
+					}
 				}
 			}
 		}
 		
+	}
+
+	public static double getVecorMean(double[] d) {
+		double total = 0;
+		int l = d.length;
+		for(int i=0; i<l; i++)
+			total += d[i];
+		
+		return total/l;
 	}
 
 }

@@ -71,9 +71,9 @@ public class KddnSettings {
     	this.N1 = data1.length;
     	this.N2 = data2.length;
 
-    	this.W = new int[this.p][this.p];
+    	this.W = new int[this.p][2*this.p];
     	for(int i=0; i<this.p; i++)
-    		for(int j=0; j<this.p; j++) {
+    		for(int j=0; j<2*this.p; j++) {
     			this.W[i][j] = 0;
     		}
 	}

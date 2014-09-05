@@ -29,12 +29,7 @@
 	experiment condition is set to single condition.
       </li>
       <li>
-        <b>Prior knowledge network</b> - Prior knowledge of network
-        topology in a text file with no row/column names. An edge per
-        row, with two node names separated by tab or comma. Or a KGML
-        file downloaded from KEGG website. It is optional. If
-        provided, KDDN will use the knowledge in learning, otherwise
-        it relies solely on data.
+        <b>Prior knowledge network</b> - Prior knowledge of network topology in KGML format or a text file with no row or column names. A KGML xml file can be downloaded from the KEGG website (http: //www.genome.jp/kegg). Text file input supports either general prior knowledge applied to both conditions or condition-specific prior knowledge. Text file input has no row or column names, and a row is a record of prior knowledge edge. If a row consists of two nodes names separated by tab or comma, it is identified as general prior knowledge. If a row consists of two nodes and a value of 1 or 2 separated by tab or comma, it is identified as a condition-specific prior knowledge that is only for condition 1 or 2. This file is optional. If provided, KDDN will use the knowledge in learning, otherwise it relies solely on data.
       </li>
     </ul>
 

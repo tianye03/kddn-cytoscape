@@ -247,10 +247,10 @@ public class KddnRunPanel extends JPanel implements
 			} else if(dataPanel.knowledgeChosen) {
 			    try {
 					priorKnowledge = FileInput.readKnowledge(dataPanel.priNetFile.getPath());
-					if(priorKnowledge != null && priorKnowledge[0].length != 2) {
+					if(priorKnowledge != null && priorKnowledge[0].length != 3) {
 						useKnowledge = false;
 						JOptionPane.showMessageDialog(null, "Does the prior knowledge file follow\n" +
-								"node1[tab|,]node2 format?\n" +
+								"node1[tab|,]node2[tab|,]<condition> format?\n" +
 								"Calculate without prior knowledge.");
 					} else
 						useKnowledge = true;

@@ -24,8 +24,15 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -36,7 +43,7 @@ import javax.swing.JTable;
  * @author Ye Tian
  *
  */
-public class KddnResultsTabbedPanel extends JPanel {
+public class KddnResultsTabbedPanel extends JPanel implements ActionListener {
 	 
     /**
 	 * 
@@ -45,6 +52,11 @@ public class KddnResultsTabbedPanel extends JPanel {
 	
 	private KddnExperiment kddnExperiment;
 	private KddnResults kddnResults;
+	
+	public JButton nodeExportBtn = null;
+	public JButton edgeExportBtn = null;
+	public JButton betaExportBtn = null;
+	private JFileChooser dataFileChooser= null;
 		
 	public KddnResultsTabbedPanel(KddnExperiment kddnExperiment, KddnResults kddnResults) {
 		this.kddnExperiment = kddnExperiment;
@@ -73,21 +85,23 @@ public class KddnResultsTabbedPanel extends JPanel {
     	JPanel subMain = new JPanel(new BorderLayout(2,12));
     	
     	// assemble parameter table
+    	JLabel pTableLabel = new JLabel("Experiment paramters:");
+    	JPanel pTableHeader = new JPanel(new BorderLayout(0,0));
+    	pTableHeader.add(pTableLabel, BorderLayout.NORTH);
+    	
     	// single condition
-		String tableName = "Experiment paramters:";
+		JPanel pTable = new JPanel(); 
     	if(!kddnExperiment.twoCondition) {
     		// no knowledge
     		if(!kddnExperiment.useKnowledge) {
     			String[] header = {"lambda 1"};
     			Object[][] data = {{new Double(kddnExperiment.lambda1)}};
-    			JPanel table = createTablePanel(data, header, tableName, 0, false);
-    	    	subMain.add(table, BorderLayout.NORTH);
+    			pTable = createTablePanel(data, header, 0, false);
     		} else { // use knowledge
     			String[] header = {"lambda 1", "theta", "delta"};
     			Object[][] data = {{new Double(kddnExperiment.lambda1),
     				new Double(kddnExperiment.theta), new Double(kddnExperiment.delta)}};
-    			JPanel table = createTablePanel(data, header, tableName, 0, false);
-    	    	subMain.add(table, BorderLayout.NORTH);
+    			pTable = createTablePanel(data, header, 0, false);
     		}
     	} else { // two conditions
     		// no knowledge
@@ -95,54 +109,115 @@ public class KddnResultsTabbedPanel extends JPanel {
     			String[] header = {"lambda 1", "lambda 2", "alpha"};
     			Object[][] data = {{new Double(kddnExperiment.lambda1),
     				new Double(kddnExperiment.lambda2), new Double(kddnExperiment.alpha)}};
-    			JPanel table = createTablePanel(data, header, tableName, 0, false);
-    	    	subMain.add(table, BorderLayout.NORTH);
+    			pTable = createTablePanel(data, header, 0, false);
     		} else { // use knowledge
     			String[] header = {"lambda 1", "lambda 2", "alpha", "theta", "delta"};
     			Object[][] data = {{new Double(kddnExperiment.lambda1),
     				new Double(kddnExperiment.lambda2), new Double(kddnExperiment.alpha),
     				new Double(kddnExperiment.theta), new Double(kddnExperiment.delta)}};
-    			JPanel table = createTablePanel(data, header, tableName, 0, false);
-    	    	subMain.add(table, BorderLayout.NORTH);
+    			pTable = createTablePanel(data, header, 0, false);
     		}
     	}
     	    	
     	// assemble node table
+    	JLabel nodeTableLabel = new JLabel();
+    	if(kddnExperiment.twoCondition)
+    		nodeTableLabel.setText("Node differential connectivity degree:");
+    	else
+    		nodeTableLabel.setText("Node connectivity degree:");
+    	nodeExportBtn = new JButton("Export");
+    	nodeExportBtn.addActionListener(this);
+    	
+    	JPanel nodeTableHeader = new JPanel(new GridBagLayout());
+    	GridBagConstraints gbc1 = new GridBagConstraints();
+    	gbc1.gridx = 0;
+    	gbc1.gridy = 0;
+    	gbc1.weightx = 1;
+    	gbc1.anchor = GridBagConstraints.WEST;
+    	nodeTableHeader.add(nodeTableLabel, gbc1);
+    	gbc1.gridx++;
+    	gbc1.weightx = 0;
+    	nodeTableHeader.add(nodeExportBtn, gbc1);
+    	
     	// single condition
+    	JPanel nodeTable = new JPanel();
     	if(!kddnExperiment.twoCondition) {
-    		tableName = "Node connectivity degree:";
 			String[] header = {"Node", "Degree"};
 			Object[][] data = getNodeTableData(kddnResults, false);
-			JPanel table = createTablePanel(data, header, tableName, 1, true);
-	    	subMain.add(table, BorderLayout.CENTER);
+			nodeTable = createTablePanel(data, header, 1, true);
     	} else { // two conditions
-    		tableName = "Node differential connectivity degree:";
-			String[] header = {"Node", "Degree"};
+			String[] header = {"Node", "Degree", "Fold Change", "P-value (t-test)"};
 			Object[][] data = getNodeTableData(kddnResults, true);
-			JPanel table = createTablePanel(data, header, tableName, 1, true);
-	    	subMain.add(table, BorderLayout.CENTER);
+			nodeTable = createTablePanel(data, header, 1, true);
     	}
     	
+    	subMain.add(mergePanel(mergePanel(pTableHeader, pTable, 0, 0),
+    			mergePanel(nodeTableHeader, nodeTable, 0, 0), 2, 12),
+    			BorderLayout.NORTH);
+    	
     	// assemble edge table
-    	tableName = "Differential edges:";
+    	JLabel edgeTableLabel = new JLabel("Differential edges:");
+    	JPanel edgeTableHeader = new JPanel(new GridBagLayout());    	
+    	edgeExportBtn = new JButton("Export");
+    	edgeExportBtn.addActionListener(this);
+    	gbc1.gridx = 0;
+    	gbc1.gridy = 0;
+    	gbc1.weightx = 1;
+    	gbc1.anchor = GridBagConstraints.WEST;
+    	edgeTableHeader.add(edgeTableLabel, gbc1);
+    	gbc1.gridx++;
+    	gbc1.weightx = 0;
+    	edgeTableHeader.add(edgeExportBtn, gbc1);
+    	
+    	JPanel table = new JPanel();
     	if(kddnExperiment.twoCondition) {
     		// has pvalue
     		if(kddnExperiment.needPvalue) {
 				String[] header = {"Node 1", "Node 2", "Condition", "P-value"};
 				Object[][] data = getEdgeTableData(kddnResults, true);
-				JPanel table = createTablePanel(data, header, tableName, 3, false);
-		    	subMain.add(table, BorderLayout.SOUTH);
+				table = createTablePanel(data, header, 3, false);
     		} else { // no pvalue
     			String[] header = {"Node 1", "Node 2", "Condition"};
 				Object[][] data = getEdgeTableData(kddnResults, false);
-				JPanel table = createTablePanel(data, header, tableName, 2, false);
-		    	subMain.add(table, BorderLayout.SOUTH);
+				table = createTablePanel(data, header, 2, false);
     		}
+        	subMain.add(mergePanel(edgeTableHeader, table, 0, 0), BorderLayout.CENTER);
     	}
-    	    	    	
+    	
+    	// assemble beta table
+    	JLabel betaTableLabel = new JLabel("Network parameters:");
+    	JPanel betaTableHeader = new JPanel(new GridBagLayout());
+    	betaExportBtn = new JButton("Export");
+    	betaExportBtn.addActionListener(this);
+    	gbc1.gridx = 0;
+    	gbc1.gridy = 0;
+    	gbc1.weightx = 1;
+    	gbc1.anchor = GridBagConstraints.WEST;
+    	betaTableHeader.add(betaTableLabel, gbc1);
+    	gbc1.gridx++;
+    	gbc1.weightx = 0;
+    	betaTableHeader.add(betaExportBtn, gbc1);
+    	
+     	JPanel betaTable = new JPanel();
+    	if(kddnExperiment.twoCondition) {
+			String[] header = {"Node 1", "Node 2", "beta (condition 1)", "beta (condition 1)"};
+			Object[][] data = getBetaTableData(kddnResults, true);
+			betaTable = createTablePanel(data, header, 0, false);
+    	} else {
+    		String[] header = {"Node 1", "Node 2", "beta"};
+			Object[][] data = getBetaTableData(kddnResults, false);
+			betaTable = createTablePanel(data, header, 0, false);
+    	}
+    	
+    	if(kddnExperiment.twoCondition)
+    		subMain.add(mergePanel(betaTableHeader, betaTable, 0, 0), BorderLayout.SOUTH);
+    	else
+    		subMain.add(mergePanel(betaTableHeader, betaTable, 0, 0), BorderLayout.CENTER);
+
     	JScrollPane mainScroll = new JScrollPane(subMain);
     	main.add(mainScroll, BorderLayout.CENTER);
 
+    	dataFileChooser = new JFileChooser(System.getProperty("user.home"));
     }
 
 	/**
@@ -175,6 +250,68 @@ public class KddnResultsTabbedPanel extends JPanel {
 		}
 		return tableData;
 	}
+	
+	/**
+	 * create beta table data
+	 * @param dn
+	 * @return
+	 */
+	private Object[][] getBetaTableData(KddnResults kddn, boolean twoCond) {
+		String[] var = kddn.varList;
+		double[][] beta = kddn.beta;
+		Object[][] tableData;	
+		
+		int rowId = 0;
+		if(twoCond) {
+			tableData = new Object[getEdgeCount(kddn)][4];
+			for(int i=0; i<var.length-1; i++) {
+				for(int j=i; j<var.length; j++) {
+					if(kddn.adjacentMatrix[i][j] != 0 ||
+							kddn.adjacentMatrix[i][j+var.length] != 0) {
+						tableData[rowId][0] = var[i];
+						tableData[rowId][1] = var[j];
+						if(beta[i][j] != 0)
+							tableData[rowId][2] = beta[i][j];
+						else
+							tableData[rowId][2] = beta[j][i];
+						if(beta[i][j+var.length] != 0)
+							tableData[rowId][3] = beta[i][j+var.length];
+						else
+							tableData[rowId][3] = beta[j][i+var.length];
+						rowId++;
+					}
+				}
+			}
+		} else {
+			tableData = new Object[getEdgeCount(kddn)][3];
+			for(int i=0; i<var.length-1; i++) {
+				for(int j=i; j<var.length; j++) {
+					if(kddn.adjacentMatrix[i][j] != 0) {
+						tableData[rowId][0] = var[i];
+						tableData[rowId][1] = var[j];
+						if(beta[i][j] != 0)
+							tableData[rowId][2] = beta[i][j];
+						else
+							tableData[rowId][2] = beta[j][i];
+						rowId++;
+					}
+				}
+			}
+		}
+		return tableData;
+	}
+
+	private int getEdgeCount(KddnResults kddn) {
+		int count = 0;
+		
+		for(int i=0; i<kddn.varList.length-1; i++)
+			for(int j=i; j<kddn.varList.length; j++) {
+				if(kddn.adjacentMatrix[i][j] != 0 ||
+						kddn.adjacentMatrix[i][j+kddn.varList.length] != 0)
+					count++;
+			}
+		return count;
+	}
 
 	/**
 	 * Return table data for node table
@@ -184,11 +321,18 @@ public class KddnResultsTabbedPanel extends JPanel {
 	 */
 	private Object[][] getNodeTableData(KddnResults kddn, boolean twoCondition) {
 		String[] var = kddn.varList;
-		Object[][] tableData = new Object[var.length][2];
+		Object[][] tableData;
+		if(twoCondition)
+			tableData = new Object[var.length][4];
+		else	
+			tableData = new Object[var.length][2];
 		for(int i=0; i<var.length; i++) {
 			tableData[i][0] = var[i];
-			if(twoCondition)
+			if(twoCondition) {
 				tableData[i][1] = getDifferentialDegree(kddn.adjacentMatrix, i);
+				tableData[i][2] = kddn.foldChange.get(var[i]);
+				tableData[i][3] = kddn.ttestP.get(var[i]);
+			}
 			else
 				tableData[i][1] = getConserveDegree(kddn.adjacentMatrix, i);
 		}
@@ -237,9 +381,8 @@ public class KddnResultsTabbedPanel extends JPanel {
 	 * @return
 	 */
 	private JPanel createTablePanel(Object[][] data, String[] columnNames,
-			String tableName, int i, boolean toggleTwice) {
+			int i, boolean toggleTwice) {
 		
-    	JLabel tableLabel = new JLabel(tableName);
     	JTable table = new JTable(data, columnNames);
     	JScrollPane scrollPane = new JScrollPane(table, 
     			JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -253,10 +396,116 @@ public class KddnResultsTabbedPanel extends JPanel {
     		table.getRowSorter().toggleSortOrder(i);
     	
     	JPanel panel = new JPanel(new BorderLayout(2,2));
-    	panel.add(tableLabel, BorderLayout.NORTH);
-    	panel.add(scrollPane, BorderLayout.CENTER);
+    	panel.add(scrollPane, BorderLayout.NORTH);
 
     	return panel;
 
+	}
+	
+	private JPanel mergePanel(JPanel p1,
+			JPanel p2, int x, int y) {
+		
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout(x,y));
+		panel.add(p1, BorderLayout.NORTH);
+		panel.add(p2, BorderLayout.CENTER);
+		
+		return panel;
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if (e.getSource() == nodeExportBtn) {
+			int returnVal = dataFileChooser.showSaveDialog(KddnResultsTabbedPanel.this);
+			if (returnVal == JFileChooser.APPROVE_OPTION) {
+				File file = dataFileChooser.getSelectedFile();
+				String fileName = file.getParent() + '/' + file.getName();
+	            if(!kddnExperiment.twoCondition) {
+	        		String[] header = {"Node", "Degree"};
+	        		Object[][] data = getNodeTableData(kddnResults, false);
+		            writeCSV(fileName, data, header);
+		        } else { // two conditions
+        			String[] header = {"Node", "Degree", "Fold Change", "P-value (t-test)"};
+        			Object[][] data = getNodeTableData(kddnResults, true);
+		            writeCSV(fileName, data, header);
+		        }
+			}
+		}
+		
+		if (e.getSource() == edgeExportBtn) {
+			int returnVal = dataFileChooser.showSaveDialog(KddnResultsTabbedPanel.this);
+			if (returnVal == JFileChooser.APPROVE_OPTION) {
+				File file = dataFileChooser.getSelectedFile();
+				String fileName = file.getParent() + '/' + file.getName();
+				if(kddnExperiment.twoCondition) {
+		    		// has pvalue
+		    		if(kddnExperiment.needPvalue) {
+						String[] header = {"Node 1", "Node 2", "Condition", "P-value"};
+						Object[][] data = getEdgeTableData(kddnResults, true);
+			            writeCSV(fileName, data, header);
+		    		} else { // no pvalue
+		    			String[] header = {"Node 1", "Node 2", "Condition"};
+						Object[][] data = getEdgeTableData(kddnResults, false);
+			            writeCSV(fileName, data, header);
+		    		}
+		    	}
+			}
+		}
+		
+		if (e.getSource() == betaExportBtn) {
+			int returnVal = dataFileChooser.showSaveDialog(KddnResultsTabbedPanel.this);
+			if (returnVal == JFileChooser.APPROVE_OPTION) {
+				File file = dataFileChooser.getSelectedFile();
+				String fileName = file.getParent() + '/' + file.getName();
+				if(kddnExperiment.twoCondition) {
+					String[] header = {"Node 1", "Node 2", "beta (condition 1)", "beta (condition 1)"};
+					Object[][] data = getBetaTableData(kddnResults, true);
+					writeCSV(fileName, data, header);
+		    	} else {
+		    		String[] header = {"Node 1", "Node 2", "beta"};
+					Object[][] data = getBetaTableData(kddnResults, false);
+					writeCSV(fileName, data, header);
+		    	}
+			}
+		}
+	}
+
+	private void writeCSV(String fileName, Object[][] data, String[] header) {
+		BufferedWriter outputStream = null;
+        try {
+            outputStream = new BufferedWriter(new FileWriter(fileName), 1*1024*1024);
+        
+   			for(int i=0; i<header.length; i++) {
+   				outputStream.write(header[i]);
+   				if(i < header.length - 1)
+   					outputStream.write(",");
+   			}
+   			outputStream.newLine();
+
+   			int row = data.length;
+            int col = data[0].length;
+            
+            for(int i=0; i<row; i++) {
+            	String content = "" + data[i][0];
+            	for(int j=1; j<col-1; j++) {
+            		content = content + "," + data[i][j];
+            	}
+            	content = content + "," + data[i][col-1];
+        		outputStream.write(content);
+                outputStream.newLine();
+            }
+        } catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} finally {
+            if (outputStream != null) {
+                try {
+					outputStream.close();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+            }
+        }
 	}
 }
